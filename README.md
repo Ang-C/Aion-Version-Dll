@@ -14,6 +14,7 @@ Note: Existing patch dlls should be removed from the bin32/bin64 directories as 
 - Remove: d3d8thk.dll
 - Remove: d3dx9_38.dll
 
-Tested with the Aion 4.0.0.12 game client on Windows 7 and Windows 10. 
+Tested with the Aion 4.0.0.12 game client on Windows 7 and Windows 10.  
+Tested with Aion 3.5.0.12 on Windows 10.
 
 Source depends on: https://github.com/Microsoft/Detours

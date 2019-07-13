@@ -1,11 +1,15 @@
 #define WIN32_LEAN_AND_MEAN
 #define _HAS_EXCEPTIONS 0
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
 
 #include <windows.h>
 #include <stdio.h>
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
-#include "winsock2.h"
+#include <winsock2.h>
+#include <intrin.h>
+
 #include "detours.h"
+#include "OffsetManager.h"
+
 
 static const char s_ipToReplace[16] = "70.5.0.18";
 static char s_serverIp[16] = "";
@@ -56,9 +60,10 @@ WINAPI
 zzSetCursorPos(
     _In_ int X,
     _In_ int Y) {
+
     BOOL result = real_SetCursorPos(X, Y);
     HWND hwnd = GetActiveWindow();
-    if (hwnd) {
+    if (hwnd && OffsetManager::isCamCall((DWORD)_ReturnAddress())) {
 
         POINT pt;
         GetCursorPos(&pt);
@@ -154,9 +159,22 @@ void InstallPatch()
     LONG error = DetourTransactionCommit();
 }
 
+
+void waitForGameReadiness() {
+    // We wait 60 seconds, as for some reason the search may fail
+    // even when the dll are loaded.
+    for (int i = 0; i < 60 && !OffsetManager::findOffsets(); i++) {
+
+        Sleep(1000);
+    }
+}
+
+
 BOOL WINAPI DllMain(_In_ HINSTANCE hinstDLL, _In_ DWORD fdwReason, _In_ LPVOID lpvReserved)
 {
     if (fdwReason == DLL_PROCESS_ATTACH) {
+        // Fixes the "resize window" issue. No exit on error, as it's not mandatory
+        CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)waitForGameReadiness, NULL, NULL, NULL);
         InstallPatch();
     }
     return TRUE;
